@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Better PiP",
+  "description": "A better Picture-in-Picture extension for Google Chrome, inspired by Firefox's new PiP. Optimized for YouTube, but works on any video player (with limited functionality).",
+  "version": "1.0",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "Open Better PiP"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+P",
+        "mac": "Alt+P"
+      },
+      "description": "Open Picture-in-Picture"
+    }
+  }
+}
