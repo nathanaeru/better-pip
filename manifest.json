@@ -18,5 +18,8 @@
       },
       "description": "Open Picture-in-Picture"
     }
+  },
+  "icons": {
+    "128": "icon128.png"
   }
 }
