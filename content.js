@@ -4,24 +4,46 @@
   if (!video) return alert("No video found!");
   if (!("documentPictureInPicture" in window))
     return alert("Browser not supported.");
-  if (window.documentPictureInPicture.window) return;
+  if (window.documentPictureInPicture.window) {
+    window.documentPictureInPicture.window.document.title =
+      "Picture-in-Picture Video";
+    return;
+  }
 
   // Open PiP window
-  const pipWindow = await window.documentPictureInPicture.requestWindow({
-    width: video.videoWidth || 640,
-    height: video.videoHeight || 360,
-  });
+  // Workaround: Some browsers take a snapshot of the main page title when opening PiP.
+  // We temporarily swap the main page title to force the PiP window to pick it up.
+  const originalTitle = document.title;
+  document.title = "Picture-in-Picture Video";
 
-  // Load font
-  const fontLink = document.createElement("link");
-  fontLink.rel = "stylesheet";
-  fontLink.href =
-    "https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap";
-  pipWindow.document.head.append(fontLink);
+  // Give the browser event loop a moment to propagate the title change to the OS/UI
+  await new Promise((r) => setTimeout(r, 200));
 
-  // Styling
-  const style = document.createElement("style");
-  style.textContent = `
+  let pipWindow;
+  try {
+    // Open PiP window
+    pipWindow = await window.documentPictureInPicture.requestWindow({
+      width: video.videoWidth || 640,
+      height: video.videoHeight || 360,
+    });
+  } catch (err) {
+    document.title = originalTitle; // Restore if failed
+    throw err;
+  }
+
+  // Restore original title after a delay to ensure OS captures it
+  setTimeout(() => {
+    document.title = originalTitle;
+  }, 500);
+  // Initialize PiP window using document.write to firmly establish the title
+  pipWindow.document.open();
+  pipWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Picture-in-Picture Video</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap">
+  <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; background: #000; height: 100vh; width: 100vw;
@@ -63,8 +85,8 @@
       display: flex; align-items: center; justify-content: center;
       border-radius: 50%; 
       font-size: 18px; 
-      padding: 0;        /* <--- FIX 1 */
-      line-height: 1;    /* <--- FIX 2 */
+      padding: 0;
+      line-height: 1;
       transition: background 0.2s;
     }
     button:hover { background: rgba(255,255,255,0.2); }
@@ -79,21 +101,36 @@
     }
     input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     .time-display { font-size: 12px; color: #eee; font-weight: 500; min-width: 40px; text-align: center; }
-  `;
-  pipWindow.document.head.append(style);
+  </style>
+</head>
+<body>
+  <div class="video-layer" id="vid-container"></div>
+  <div class="subtitle-layer"><span class="subtitle-text" id="sub-text"></span></div>
+  <div class="controls-layer">
+    <button id="play-btn">⏸</button>
+    <span class="time-display" id="curr-time">0:00</span>
+    <input type="range" id="seek-bar" value="0" min="0" step="0.1">
+    <span class="time-display" id="dur-time">0:00</span>
+    <button id="close-btn" title="Close PiP">⤢</button>
+  </div>
+</body>
+</html>
+  `);
+  pipWindow.document.close();
 
-  // HTML structure
-  pipWindow.document.body.innerHTML = `
-    <div class="video-layer" id="vid-container"></div>
-    <div class="subtitle-layer"><span class="subtitle-text" id="sub-text"></span></div>
-    <div class="controls-layer">
-      <button id="play-btn">⏸</button>
-      <span class="time-display" id="curr-time">0:00</span>
-      <input type="range" id="seek-bar" value="0" min="0" step="0.1">
-      <span class="time-display" id="dur-time">0:00</span>
-      <button id="close-btn" title="Close PiP">⤢</button>
-    </div>
-  `;
+  // Force title persistence (still good to have)
+  const ensureTitle = () => {
+    if (pipWindow.document.title !== "Picture-in-Picture Video") {
+      pipWindow.document.title = "Picture-in-Picture Video";
+    }
+  };
+  // Re-attach observer to the NEW document
+  const titleObserver = new MutationObserver(ensureTitle);
+  titleObserver.observe(pipWindow.document.querySelector("title"), {
+    subtree: true,
+    characterData: true,
+    childList: true,
+  });
 
   // Logic & moving video
   const originalParent = video.parentNode;
@@ -217,6 +254,7 @@
   // Cleanup
   pipWindow.addEventListener("pagehide", () => {
     observer.disconnect();
+    titleObserver.disconnect();
     video.className = originalClasses;
     if (originalNextSibling)
       originalParent.insertBefore(video, originalNextSibling);
