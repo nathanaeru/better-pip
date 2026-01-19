@@ -302,7 +302,7 @@
     `;
     btn.title = "Open Picture-in-Picture (Alt+P)";
 
-    // Dynamic Positioning (1/3 from bottom)
+    // Dynamic Positioning
     const updatePos = () => {
       const vidHeight =
         video.offsetHeight || video.getBoundingClientRect().height;
@@ -321,8 +321,6 @@
       btn.style.opacity = "1";
     });
     parent.addEventListener("mouseleave", () => (btn.style.opacity = "0"));
-
-    // Also show if video is paused?
 
     btn.addEventListener("click", (e) => {
       e.stopPropagation();

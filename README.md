@@ -28,7 +28,7 @@ Better PiP is a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, et
 ## Usage
 
 1.  Navigate to any website with a video player (e.g., YouTube).
-2.  **Hover over the video player** to click the floating PiP icon in the top-left corner, OR click the **Better PiP** extension icon in the browser toolbar (or use `Alt+P`).
+2.  **Hover over the video player** to click the floating PiP icon in the bottom-right, OR click the **Better PiP** extension icon in the browser toolbar (or use `Alt+P`).
 3.  The video will pop out into a floating window with controls and subtitles.
 4.  Resize and move the window as needed.
 5.  Click the Close button or standard window controls to return the video to the page.

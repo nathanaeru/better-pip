@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Better PiP",
-  "description": "A better Picture-in-Picture extension for Google Chrome, inspired by Firefox's new PiP. Optimized for YouTube, but works on any video player (with limited functionality).",
+  "description": "A better Picture-in-Picture extension for Google Chrome, inspired by Firefox's new PiP. Optimized for YouTube, but works on any video player (with limited functionality). Alt+P to activate.",
   "version": "1.0",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
