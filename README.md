@@ -4,7 +4,7 @@ Better PiP is a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, et
 
 ## Features
 
-- **Floating Overlay Button**: A convenient "Picture-in-Picture" icon appears in the top-left corner of the video player on hover, giving you quick access to PiP mode.
+- **Floating Overlay Button**: A convenient "Picture-in-Picture" icon appears in the bottom-right corner of the video player on hover, giving you quick access to PiP mode.
 - **Enhanced Controls**: Unlike the standard PiP window, Better PiP includes:
   - Play/Pause button
   - Seek bar for easy navigation

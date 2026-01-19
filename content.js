@@ -298,8 +298,8 @@
       justify-content: center;
       opacity: 0;
       transition: opacity 0.3s;
-      left: 10px;
-      top: 10px !important;
+      right: 10px;
+      top: 600px !important;
     `;
     btn.title = "Open Picture-in-Picture (Alt+P)";
 
