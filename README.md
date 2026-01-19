@@ -1,9 +1,10 @@
 # Better PiP
 
-Better PiP is a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, etc.) extension that enhances the Picture-in-Picture (PiP) experience. Inspired by latest Firefox's PiP implementation, this extension adds essential playback controls and subtitle support directly to the PiP window, making it a fully functional mini-player.
+Better PiP is a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, etc.) extension that enhances the Picture-in-Picture (PiP) experience. Inspired by latest Firefox's PiP implementation, this extension adds essential playback controls and subtitle support directly to the PiP window, making it a fully functional mini-player. This extension is optimized for YouTube but may work on other sites with similar structure.
 
 ## Features
 
+- **Floating Overlay Button**: A convenient "Picture-in-Picture" icon appears in the top-left corner of the video player on hover, giving you quick access to PiP mode.
 - **Enhanced Controls**: Unlike the standard PiP window, Better PiP includes:
   - Play/Pause button
   - Seek bar for easy navigation
@@ -27,7 +28,7 @@ Better PiP is a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, et
 ## Usage
 
 1.  Navigate to any website with a video player (e.g., YouTube).
-2.  Click the **Better PiP** extension icon in the browser toolbar (or use `Alt+P`).
+2.  **Hover over the video player** to click the floating PiP icon in the top-left corner, OR click the **Better PiP** extension icon in the browser toolbar (or use `Alt+P`).
 3.  The video will pop out into a floating window with controls and subtitles.
 4.  Resize and move the window as needed.
 5.  Click the Close button or standard window controls to return the video to the page.

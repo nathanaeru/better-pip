@@ -1,47 +1,50 @@
-(async () => {
-  // Safety checks
-  const video = document.querySelector("video");
-  if (!video) return alert("No video found!");
-  if (!("documentPictureInPicture" in window))
-    return alert("Browser not supported.");
-  if (window.documentPictureInPicture.window) {
-    window.documentPictureInPicture.window.document.title =
-      "Picture-in-Picture Video";
-    return;
-  }
+(() => {
+  if (window.betterPipInitialized) return;
+  window.betterPipInitialized = true;
 
-  // Open PiP window
-  // Workaround: Some browsers take a snapshot of the main page title when opening PiP.
-  // We temporarily swap the main page title to force the PiP window to pick it up.
-  const originalTitle = document.title;
-  document.title = "Picture-in-Picture Video";
+  // Configuration
+  const PIP_TITLE = "Picture-in-Picture Video";
 
-  // Give the browser event loop a moment to propagate the title change to the OS/UI
-  await new Promise((r) => setTimeout(r, 200));
+  // PiP Logic
+  async function togglePiP(video) {
+    if (!video) return alert("No video found!");
+    if (!("documentPictureInPicture" in window))
+      return alert("Browser not supported.");
+    if (window.documentPictureInPicture.window) {
+      window.documentPictureInPicture.window.document.title = PIP_TITLE;
+      return;
+    }
 
-  let pipWindow;
-  try {
-    // Open PiP window
-    pipWindow = await window.documentPictureInPicture.requestWindow({
-      width: video.videoWidth || 640,
-      height: video.videoHeight || 360,
-    });
-  } catch (err) {
-    document.title = originalTitle; // Restore if failed
-    throw err;
-  }
+    // Workaround: Title Swap
+    const originalTitle = document.title;
+    document.title = PIP_TITLE;
 
-  // Restore original title after a delay to ensure OS captures it
-  setTimeout(() => {
-    document.title = originalTitle;
-  }, 500);
-  // Initialize PiP window using document.write to firmly establish the title
-  pipWindow.document.open();
-  pipWindow.document.write(`
+    // Delay for OS propagation
+    await new Promise((r) => setTimeout(r, 200));
+
+    let pipWindow;
+    try {
+      pipWindow = await window.documentPictureInPicture.requestWindow({
+        width: video.videoWidth || 640,
+        height: video.videoHeight || 360,
+      });
+    } catch (err) {
+      document.title = originalTitle;
+      throw err;
+    }
+
+    // Restore title
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 500);
+
+    // Initialize Document
+    pipWindow.document.open();
+    pipWindow.document.write(`
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Picture-in-Picture Video</title>
+  <title>${PIP_TITLE}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap">
   <style>
     * { box-sizing: border-box; }
@@ -115,149 +118,232 @@
   </div>
 </body>
 </html>
-  `);
-  pipWindow.document.close();
+    `);
+    pipWindow.document.close();
 
-  // Force title persistence (still good to have)
-  const ensureTitle = () => {
-    if (pipWindow.document.title !== "Picture-in-Picture Video") {
-      pipWindow.document.title = "Picture-in-Picture Video";
-    }
-  };
-  // Re-attach observer to the NEW document
-  const titleObserver = new MutationObserver(ensureTitle);
-  titleObserver.observe(pipWindow.document.querySelector("title"), {
-    subtree: true,
-    characterData: true,
-    childList: true,
-  });
+    // Re-attach observer logic
+    const ensureTitle = () => {
+      if (pipWindow.document.title !== PIP_TITLE) {
+        pipWindow.document.title = PIP_TITLE;
+      }
+    };
+    const titleObserver = new MutationObserver(ensureTitle);
+    titleObserver.observe(pipWindow.document.querySelector("title"), {
+      subtree: true,
+      characterData: true,
+      childList: true,
+    });
 
-  // Logic & moving video
-  const originalParent = video.parentNode;
-  const originalNextSibling = video.nextSibling;
-  const originalClasses = video.className;
-  const vidContainer = pipWindow.document.getElementById("vid-container");
-  video.className = "";
-  vidContainer.appendChild(video);
+    // Move video
+    const originalParent = video.parentNode;
+    const originalNextSibling = video.nextSibling;
+    const originalClasses = video.className;
+    const vidContainer = pipWindow.document.getElementById("vid-container");
+    video.className = "";
+    vidContainer.appendChild(video);
 
-  // Core logic
-  const playBtn = pipWindow.document.getElementById("play-btn");
-  const seekBar = pipWindow.document.getElementById("seek-bar");
-  const closeBtn = pipWindow.document.getElementById("close-btn");
-  const currTimeEl = pipWindow.document.getElementById("curr-time");
-  const durTimeEl = pipWindow.document.getElementById("dur-time");
+    // Elements
+    const playBtn = pipWindow.document.getElementById("play-btn");
+    const seekBar = pipWindow.document.getElementById("seek-bar");
+    const closeBtn = pipWindow.document.getElementById("close-btn");
+    const currTimeEl = pipWindow.document.getElementById("curr-time");
+    const durTimeEl = pipWindow.document.getElementById("dur-time");
 
-  // Unified Functions
-  const togglePlay = () => (video.paused ? video.play() : video.pause());
-  const updatePlayIcon = () => (playBtn.textContent = video.paused ? "▶" : "⏸");
-  const fmt = (s) => {
-    if (isNaN(s)) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${m}:${sec}`;
-  };
-  const updateSliderStyle = (val, max) => {
-    const percentage = (val / max) * 100;
-    seekBar.style.background = `linear-gradient(to right, #ff0000 ${percentage}%, rgba(255,255,255,0.3) ${percentage}%)`;
-  };
+    // Functions
+    const togglePlay = () => (video.paused ? video.play() : video.pause());
+    const updatePlayIcon = () =>
+      (playBtn.textContent = video.paused ? "▶" : "⏸");
+    const fmt = (s) => {
+      if (isNaN(s)) return "0:00";
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60)
+        .toString()
+        .padStart(2, "0");
+      return `${m}:${sec}`;
+    };
+    const updateSliderStyle = (val, max) => {
+      const percentage = (val / max) * 100;
+      seekBar.style.background = `linear-gradient(to right, #ff0000 ${percentage}%, rgba(255,255,255,0.3) ${percentage}%)`;
+    };
 
-  // Event listeners
+    // Listeners
+    playBtn.onclick = (e) => {
+      e.stopPropagation();
+      togglePlay();
+    };
+    vidContainer.onclick = () => togglePlay();
+    closeBtn.onclick = () => pipWindow.close();
 
-  // Mouse Controls
-  playBtn.onclick = (e) => {
-    e.stopPropagation();
-    togglePlay();
-  };
-  vidContainer.onclick = () => togglePlay();
-  closeBtn.onclick = () => pipWindow.close();
-
-  // Slider Logic
-  video.addEventListener("timeupdate", () => {
-    if (!video.duration) return;
-    seekBar.value = video.currentTime;
-    seekBar.max = video.duration;
-    currTimeEl.textContent = fmt(video.currentTime);
-    updateSliderStyle(video.currentTime, video.duration);
-  });
-  seekBar.addEventListener("input", (e) => {
-    const time = parseFloat(e.target.value);
-    video.currentTime = time;
-    updateSliderStyle(time, video.duration);
-  });
-
-  video.addEventListener("play", updatePlayIcon);
-  video.addEventListener("pause", updatePlayIcon);
-  video.addEventListener("loadedmetadata", () => {
-    if (video.duration) {
+    // Slider
+    const timeUpdate = () => {
+      if (!video.duration) return;
+      seekBar.value = video.currentTime;
       seekBar.max = video.duration;
-      durTimeEl.textContent = fmt(video.duration);
+      currTimeEl.textContent = fmt(video.currentTime);
+      updateSliderStyle(video.currentTime, video.duration);
+    };
+    const seekInput = (e) => {
+      const time = parseFloat(e.target.value);
+      video.currentTime = time;
+      updateSliderStyle(time, video.duration);
+    };
+    const loadedMeta = () => {
+      if (video.duration) {
+        seekBar.max = video.duration;
+        durTimeEl.textContent = fmt(video.duration);
+      }
+    };
+
+    video.addEventListener("timeupdate", timeUpdate);
+    seekBar.addEventListener("input", seekInput);
+    video.addEventListener("play", updatePlayIcon);
+    video.addEventListener("pause", updatePlayIcon);
+    video.addEventListener("loadedmetadata", loadedMeta);
+    if (video.duration) loadedMeta();
+
+    // Keyboard
+    pipWindow.document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+      switch (e.key) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "ArrowLeft":
+        case "j":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          updateSliderStyle(video.currentTime, video.duration);
+          break;
+        case "ArrowRight":
+        case "l":
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          updateSliderStyle(video.currentTime, video.duration);
+          break;
+      }
+    });
+
+    // Subtitles (Simplified reuse)
+    const subTextEl = pipWindow.document.getElementById("sub-text");
+    const subSelectors = [
+      ".ytp-caption-segment",
+      ".caption-window .caption-visual-line",
+      ".player-timedtext-text-container span",
+    ];
+    const subObserver = new MutationObserver(() => {
+      let text = [];
+      subSelectors.forEach((sel) => {
+        document.querySelectorAll(sel).forEach((el) => {
+          if (el.textContent.trim()) text.push(el.textContent.trim());
+        });
+      });
+      const uniqueText = [...new Set(text)].join("\n");
+      subTextEl.textContent = uniqueText;
+      subTextEl.style.display = uniqueText ? "inline-block" : "none";
+    });
+    subObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    // Cleanup
+    pipWindow.addEventListener("pagehide", () => {
+      subObserver.disconnect();
+      titleObserver.disconnect();
+      video.removeEventListener("timeupdate", timeUpdate);
+      seekBar.removeEventListener("input", seekInput);
+      video.removeEventListener("play", updatePlayIcon);
+      video.removeEventListener("pause", updatePlayIcon);
+      video.removeEventListener("loadedmetadata", loadedMeta);
+
+      video.className = originalClasses;
+      if (originalNextSibling)
+        originalParent.insertBefore(video, originalNextSibling);
+      else originalParent.appendChild(video);
+    });
+  }
+
+  // Overlay Button Logic
+  function addOverlay(video) {
+    if (video.hasAttribute("data-better-pip-button")) return;
+    video.setAttribute("data-better-pip-button", "true");
+
+    const parent = video.parentNode;
+    if (!parent) return;
+
+    // Check positioning
+    if (window.getComputedStyle(parent).position === "static") {
+      parent.style.position = "relative";
     }
-  });
-  // Trigger initially
-  if (video.duration) durTimeEl.textContent = fmt(video.duration);
 
-  // Keyboard shortcuts
-  pipWindow.document.addEventListener("keydown", (e) => {
-    // Ignore shortcuts if user is typing in an input (rare in PiP, but good practice)
-    if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+    const btn = document.createElement("button");
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: white;">
+        <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/>
+      </svg>
+    `;
+    btn.style.cssText = `
+      position: absolute;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      left: 10px;
+      top: 10px !important;
+    `;
+    btn.title = "Open Picture-in-Picture (Alt+P)";
 
-    switch (e.key) {
-      case " ":
-      case "k": // YouTube standard
-        e.preventDefault(); // Stop scrolling/button press
-        togglePlay();
-        break;
+    // Simulating hover on parent
+    parent.addEventListener("mouseenter", () => (btn.style.opacity = "1"));
+    parent.addEventListener("mouseleave", () => (btn.style.opacity = "0"));
 
-      case "ArrowLeft":
-      case "j": // YouTube standard
-        e.preventDefault();
-        video.currentTime = Math.max(0, video.currentTime - 10);
-        updateSliderStyle(video.currentTime, video.duration);
-        break;
+    // Also show if video is paused?
 
-      case "ArrowRight":
-      case "l": // YouTube standard
-        e.preventDefault();
-        video.currentTime = Math.min(video.duration, video.currentTime + 10);
-        updateSliderStyle(video.currentTime, video.duration);
-        break;
-    }
-  });
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      togglePiP(video);
+    });
 
-  // Subtitles
-  const subTextEl = pipWindow.document.getElementById("sub-text");
-  const subSelectors = [
-    ".ytp-caption-segment",
-    ".caption-window .caption-visual-line",
-    ".player-timedtext-text-container span",
-  ];
+    parent.appendChild(btn);
+  }
 
-  const observer = new MutationObserver(() => {
-    let text = [];
-    subSelectors.forEach((sel) => {
-      document.querySelectorAll(sel).forEach((el) => {
-        if (el.textContent.trim()) text.push(el.textContent.trim());
+  // Initial Observer
+  function observe() {
+    const selector = "video";
+    document.querySelectorAll(selector).forEach(addOverlay);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        m.addedNodes.forEach((n) => {
+          if (n.nodeName === "VIDEO") addOverlay(n);
+          if (n.querySelectorAll)
+            n.querySelectorAll("video").forEach(addOverlay);
+        });
       });
     });
-    const uniqueText = [...new Set(text)].join("\n");
-    subTextEl.textContent = uniqueText;
-    subTextEl.style.display = uniqueText ? "inline-block" : "none";
-  });
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
-  // Cleanup
-  pipWindow.addEventListener("pagehide", () => {
-    observer.disconnect();
-    titleObserver.disconnect();
-    video.className = originalClasses;
-    if (originalNextSibling)
-      originalParent.insertBefore(video, originalNextSibling);
-    else originalParent.appendChild(video);
+  // Start
+  observe();
+
+  // Listen for background messages
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === "toggle_pip") {
+      const video = document.querySelector("video");
+      if (video) togglePiP(video);
+      else alert("No video found");
+    }
   });
 })();
