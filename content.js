@@ -299,12 +299,27 @@
       opacity: 0;
       transition: opacity 0.3s;
       right: 10px;
-      top: 600px !important;
     `;
     btn.title = "Open Picture-in-Picture (Alt+P)";
 
+    // Dynamic Positioning (1/3 from bottom)
+    const updatePos = () => {
+      const vidHeight =
+        video.offsetHeight || video.getBoundingClientRect().height;
+      if (vidHeight) {
+        btn.style.top = video.offsetTop + vidHeight * 0.77 + "px";
+      }
+    };
+    const ro = new ResizeObserver(updatePos);
+    ro.observe(video);
+    // Also listen to loadedmetadata just in case
+    video.addEventListener("loadedmetadata", updatePos);
+
     // Simulating hover on parent
-    parent.addEventListener("mouseenter", () => (btn.style.opacity = "1"));
+    parent.addEventListener("mouseenter", () => {
+      updatePos(); // Ensure pos is correct before showing
+      btn.style.opacity = "1";
+    });
     parent.addEventListener("mouseleave", () => (btn.style.opacity = "0"));
 
     // Also show if video is paused?
@@ -316,6 +331,8 @@
     });
 
     parent.appendChild(btn);
+    // Initial position
+    requestAnimationFrame(updatePos);
   }
 
   // Initial Observer
