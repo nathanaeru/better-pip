@@ -121,7 +121,6 @@
     `);
     pipWindow.document.close();
 
-    // Re-attach observer logic
     const ensureTitle = () => {
       if (pipWindow.document.title !== PIP_TITLE) {
         pipWindow.document.title = PIP_TITLE;
