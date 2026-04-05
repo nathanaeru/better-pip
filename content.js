@@ -153,12 +153,18 @@
     const togglePlay = () => (video.paused ? video.play() : video.pause());
     const updatePlayIcon = () =>
       (playBtn.textContent = video.paused ? "▶" : "⏸");
-    const fmt = (s) => {
+    const fmt = (s, forceHours = false) => {
       if (isNaN(s)) return "0:00";
-      const m = Math.floor(s / 60);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
       const sec = Math.floor(s % 60)
         .toString()
         .padStart(2, "0");
+
+      if (forceHours || h > 0) {
+        return `${h}:${m.toString().padStart(2, "0")}:${sec}`;
+      }
+
       return `${m}:${sec}`;
     };
     const updateSliderStyle = (val, max) => {
@@ -177,9 +183,10 @@
     // Slider
     const timeUpdate = () => {
       if (!video.duration) return;
+      const showHours = video.duration >= 3600;
       seekBar.value = video.currentTime;
       seekBar.max = video.duration;
-      currTimeEl.textContent = fmt(video.currentTime);
+      currTimeEl.textContent = fmt(video.currentTime, showHours);
       updateSliderStyle(video.currentTime, video.duration);
     };
     const seekInput = (e) => {
@@ -189,8 +196,9 @@
     };
     const loadedMeta = () => {
       if (video.duration) {
+        const showHours = video.duration >= 3600;
         seekBar.max = video.duration;
-        durTimeEl.textContent = fmt(video.duration);
+        durTimeEl.textContent = fmt(video.duration, showHours);
       }
     };
 
