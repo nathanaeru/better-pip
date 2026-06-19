@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Better PiP for YouTube",
   "description": "A better Picture-in-Picture extension optimized exclusively for YouTube. Alt+P to activate.",
-  "version": "2.0",
+  "version": "2.0.1",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["*://*.youtube.com/*"],
   "content_scripts": [

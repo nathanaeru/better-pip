@@ -190,7 +190,7 @@
     btn.style.cssText = `
       position: absolute;
       z-index: 99999;
-      bottom: 50%;
+      bottom: 20%;
       right: 20px;
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.3);
