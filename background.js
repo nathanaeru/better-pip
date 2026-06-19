@@ -1,6 +1,12 @@
 chrome.action.onClicked.addListener(async (tab) => {
+  // Ensure we are only operating on YouTube
+  if (!tab.url || !tab.url.includes("youtube.com")) {
+    console.log("Better PiP is restricted to YouTube only.");
+    return;
+  }
+
   try {
-    // Try sending a message first (if content script is already loaded via manifest)
+    // Try sending a message first
     await chrome.tabs.sendMessage(tab.id, { action: "toggle_pip" });
   } catch (error) {
     // If message fails (script not loaded), inject it manually
